@@ -1,0 +1,60 @@
+.video-mod {
+	text-align: center;
+	margin-bottom: 20px
+}
+.video-img-upload {
+	background: #63849f;
+	text-align: center;
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	left: 0;
+	padding: 10px;
+	font-size: 14px;
+	display: block;
+	cursor: pointer
+}
+.video-img-upload {
+	background: #63849f;
+	text-align: center;
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	left: 0;
+	padding: 10px;
+	font-size: 14px;
+	display: block;
+	cursor: pointer
+}
+.video-img-upload .icon-camera {
+	color: #fff;
+	font-size: 18px
+}
+
+.video-img-upload .icon-camera:before {
+	margin-right: 10px
+}
+.video-img {
+	overflow: hidden;
+	width: 625px;
+	height: 455px;
+	margin: 0 auto 25px;
+	border-radius: 6px;
+	border: 5px solid #ccc;
+	position: relative;
+	background: #3d444c
+}
+
+.letter-msg-box .icon-camera {
+	color: #bdbdbd;
+	font-size: 18px
+}
+.letter-msg-box .icon-camera:hover {
+	color: #00bc9b
+}
+.icon-camera:before {
+	content: "\f030"
+}
+.icon-camera-retro:before {
+	content: "\f083"
+}

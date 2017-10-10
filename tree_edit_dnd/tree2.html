@@ -1,0 +1,518 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="keywords" content="jquery,ui,easy,easyui,web">
+	<meta name="description" content="easyui help you build your web page easily!">
+	<title>treeGrid2</title>
+	
+	
+<link id="uiTheme" rel="stylesheet" type="text/css"	href="/js/themes/gray/easyui.css">
+<link rel="stylesheet" type="text/css" href="/js/themes/mobile.css">  
+<link id="uiTheme" rel="stylesheet" type="text/css" href="/js/themes/icon.css">
+<link id="uiTheme" rel="stylesheet" type="text/css" href="/js/themes/color.css">
+<link rel="stylesheet" type="text/css" href="/js/demo/demo.css">
+
+<script type="text/javascript" src="/js/jquery.min.js"  Charset="UTF-8"></script>
+<script type="text/javascript" src="/js/jquery.easyui.min.js"  Charset="UTF-8"></script>
+<script type="text/javascript" src="/js/jquery.easyui.mobile.js"></script>
+<script type="text/javascript" src="/js/locale/easyui-lang-zh_CN.js"  Charset="UTF-8"></script>
+
+<script type="text/javascript" src="/3nd_js/jquery.edatagrid.js"></script>	
+
+
+<script type="text/javascript">
+ var editingId;
+ var is_read=0;
+$(function(){
+
+	$.extend($.fn.treegrid.methods, {  
+        disableDnd:function(jq,id){  
+            return jq.each(function() {  
+                var target = this;  
+                var state = $.data(this, 'treegrid');  
+                state.disabledNodes = [];  
+                var t = $(this);  
+                var opts = state.options;  
+                if (id) {  
+                    var nodes = opts.finder.getTr(target, id);  
+                    var rows = t.treegrid('getChildren', id);  
+                    for (var i = 0; i < rows.length; i++) {  
+                        nodes = nodes.add(opts.finder.getTr(target, rows[i][opts.idField]));  
+                    }  
+                } else {  
+                    var nodes = t.treegrid('getPanel').find('tr[node-id]');  
+                }  
+                nodes.draggable({  
+                    disabled: true,  
+                    revert: true,  
+                    cursor: 'pointer'});  
+            });  
+        }  
+    }); 
+	
+	$('#tg').treegrid({    
+		//title:'Tree',
+		url:'getdata.php',
+		rownumbers:true,
+		fitColumns: true,
+		border:false,
+		fit:true,
+		idField:'id', 
+		treeField:'text',		
+		columns:[[  
+			{
+				field : 'text',
+				title : '名称',
+				width : 100,
+				editor:'textbox'
+			},
+			{
+				field : 'href',
+				title : '链接',
+				width : 100,
+				editor:'textbox'
+			},
+			{
+				field : 'iconCls',
+				title : '图标',
+				width : 80,
+				editor:{
+					type:'combobox',
+					options:{
+						data : themes,
+						showItemIcon: true,
+						panelHeight: 'auto',		
+					}
+				}
+			},
+			{
+				field : 'issort',
+				title : '排序',
+				width : 30,
+				editor:'numberbox'
+			},
+			{
+				field : 'seq',
+				title : 'seq',
+				width : 30,
+				editor:'numberbox'
+			},
+			{
+				field : 'status',
+				title : '权限',
+				width : 30,
+				editor:'numberbox'
+			},
+			//{field:'text',title:'text',width:100,editor:'text'},    
+			//{field:'iconCls',title:'iconCls',width:100,editor:'text'},    
+			//{field:'issort',title:'issort',width:100,align:'left',editor:'text'} ,
+			{field:'id',title:'mid',width:20},
+			{field:'pid',title:'pid',width:20},			
+		]],
+		toolbar: '#tb',
+		onDblClickRow:function(row){
+			edit();
+		},
+		onLoadSuccess:function(row){
+			//$(this).treegrid('enableDnd', row?row.id:null);
+		}, 
+		onClickRow:function(row){ 
+			
+			save();
+			
+			//console.log(row.state);
+			
+			if(row.state=='open'){
+				$(this).treegrid('collapse',row.id);
+			}else{
+				$(this).treegrid('expand',row.id);
+			}
+         }, 
+		 onLoadSuccess: function(row){  
+          // enableDnd($('#tg'));  
+        },
+		onBeforeEdit: function(row){  
+         //    $(this).treegrid('disableDnd');  
+        }
+		
+	}); 
+	
+	$('#add_to_xg').switchbutton({
+		onText:'拖动',
+		offText:'只读',
+		width:90,
+		checked:false,
+		onChange:function(checked){
+			if(checked){
+				is_read='0'	//修改
+				enableDnd($('#tg')); 
+				
+			}else{
+				is_read='1'
+				disableDnd($('#tg'));
+			}
+			console.log(is_read);
+		}		
+	});		
+});
+function append(){  
+    var node = $('#tg').treegrid('getSelected');  
+    if(node){  
+        var obj = {  
+                id: -1*Math.random(),  
+                text:'new_text',  
+                pid:node.id,                 
+            };  
+        $('#tg').treegrid('append',{  
+            parent: node.id,  // the node has a 'id' value that defined through 'idField' property  
+            data: [obj]  
+        });  
+		//因为它还没有 id (mid)
+        // enableDnd($('#tg'));  
+		
+		$.ajax({ 
+			url: 'ajax.php?opt=add', 
+			dataType: 'json', 
+			type:'post', 
+			data: { 
+				data: obj, 
+			}, 
+			success:function(data){ 
+				if(data.result) 
+				{ 
+					//$('#tg').treegrid('reload');    //重新加载treegrid  
+					$.messager.show({
+						title:'我的消息',
+						msg:data.sql							
+					});						
+			   } 
+			} 
+		 
+		});		 
+    }  
+}  
+function edit(){
+	
+   if (editingId != undefined){  
+        save();  
+    }  
+    var row = $('#tg').treegrid('getSelected');  
+    if (row){  
+        editingId = row.id  
+        $('#tg').treegrid('beginEdit', editingId);  
+       
+        $(".datagrid-row-editing input").each(function(){  
+            $(this).bind('mousedown',function(e){  
+                e.stopPropagation();  
+            });  
+        });            
+    }  
+}
+function save(){
+	 
+    if (editingId != undefined){  
+        $('#tg').treegrid('endEdit', editingId);  
+        var row = $('#tg').treegrid('find', editingId);  
+        if(row.id > 0){            
+			console.log(row);
+			$.ajax({ 
+				url: 'ajax.php?opt=edit', 
+				dataType: 'json', 
+				type:'post', 
+				data: { 
+					data: row, 
+				}, 
+				success:function(data){ 
+					if(data.result) 
+					{ 
+						//$('#tg').treegrid('reload');    //重新加载treegrid  
+						$.messager.show({
+							title:'我的消息',
+							msg:data.sql							
+						});						
+				   } 
+				} 
+			 
+			});			
+        }  
+        editingId = undefined;  
+    }   
+}
+function cancel(){
+   if (editingId != undefined){  
+        $('#tg').treegrid('cancelEdit', editingId);  
+        editingId = undefined;  
+    }  
+}
+
+function del() {
+	var node = $('#tg').treegrid('getSelected');  
+    if (node){  
+		$.messager.confirm('确认', '您确定要删除此选中行吗?', function (r) { 
+			if (r){
+				$('#tg').treegrid('remove', node.id);  
+				if(editingId != undefined && editingId == node.id){  
+					editingId = undefined;  
+				}  
+				
+				console.log(node.id);
+				$.ajax({ 
+					url: 'ajax.php?opt=del', 
+					dataType: 'json', 
+					type:'post', 
+					data: { 
+						"id": node.id, 
+					}, 
+					success:function(data){ 
+						if(data.result) 
+						{ 
+							$.messager.show({
+								title:'我的消息',
+								msg:data.sql						
+							});					
+					   } 
+					} 		 
+				});  			
+			}
+		});
+    }  
+}
+
+function enableDnd(t){  
+    var nodes = t.treegrid('getPanel').find('tr[node-id]');  
+    nodes.find('span.tree-hit').bind('mousedown.treegrid',function(){  
+        return false;  
+    });  
+    nodes.draggable({  
+        disabled:false,  
+        revert:true,  
+        cursor:'pointer',  
+        proxy: function(source){  
+            var p = $('<div class="tree-node-proxy tree-dnd-no"></div>').appendTo('body');  
+            p.html($(source).find('.tree-title').html());  
+            p.hide();  
+            return p;  
+        },  
+        deltaX: 15,  
+        deltaY: 15,  
+        onBeforeDrag:function(){  
+            $(this).next('tr.treegrid-tr-tree').find('tr[node-id]').droppable({accept:'no-accept'});  
+        },  
+        onStartDrag:function(){  
+            $(this).draggable('proxy').css({  
+                left:-10000,  
+                top:-10000  
+            });  
+        },  
+        onDrag:function(e){  
+            $(this).draggable('proxy').show();  
+            this.pageY = e.pageY;  
+        },  
+        onStopDrag:function(){  
+            $(this).next('tr.treegrid-tr-tree').find('tr[node-id]').droppable({accept:'tr[node-id]'});  
+        }  
+    }).droppable({  
+        accept:'tr[node-id]',  
+        onDragOver:function(e,source){  
+            var pageY = source.pageY;  
+            var top = $(this).offset().top;  
+            var bottom = top + $(this).outerHeight();  
+            $(source).draggable('proxy').removeClass('tree-dnd-no').addClass('tree-dnd-yes');  
+            $(this).removeClass('row-append row-top row-bottom');  
+            if (pageY > top + (bottom - top) / 2){  
+                if (bottom - pageY < 5){  
+                    $(this).addClass('row-bottom');  
+                } else {  
+                    $(this).addClass('row-append');  
+                }  
+            } else {  
+                if (pageY - top < 5){  
+                    $(this).addClass('row-top');  
+                } else {  
+                    $(this).addClass('row-append');  
+                }  
+            }  
+        },  
+        onDragLeave:function(e,source){  
+            $(source).draggable('proxy').removeClass('tree-dnd-yes').addClass('tree-dnd-no');  
+            $(this).removeClass('row-append row-top row-bottom');  
+        },  
+        onDrop:function(e,source){  
+            var action,point;  
+            if ($(this).hasClass('row-append')){  
+                action = 'append';  
+            } else {  
+                action = 'insert';  
+                point = $(this).hasClass('row-top') ? 'top' : 'bottom';  
+            }  
+            $(this).removeClass('row-append row-top row-bottom');  
+            //alert(action+":"+point);  
+            // your logic code here  
+            // do append or insert action and reload the treegrid data  
+            var src  = t.treegrid('find', $(source).attr('node-id'));  
+            var dest = t.treegrid('find', $(this).attr('node-id'));  
+            //alert(src.name+","+dest.name);  
+            if (src){  
+                t.treegrid('remove', src.id);  
+            }  
+            if(action == "append"){  
+                src.parent = {};  
+                src.parent.id = dest.id;  
+                t.treegrid('append',{  
+                    parent: dest.id,  // the node has a 'id' value that defined through 'idField' property  
+                    data: [src]  
+                });  
+            }else if(action == "insert"){  
+                src.parent = dest.parent;  
+                var obj = {  
+                        before: dest.id,  
+                        after: dest.id,  
+                        data: src  
+                }  
+                if(point == "top"){  
+                    delete obj.after;  
+                }else{  
+                    delete obj.before;  
+                }  
+                t.treegrid('insert', obj);  
+            }  
+            if(src.id > 0){  
+				console.log(src);
+				console.log(dest);
+            }  
+              
+            enableDnd(t);  
+            
+            $.ajax({ 
+                url: 'ajax.php?opt=dnd', 
+                dataType: 'json', 
+                type:'post', 
+                data: { 
+                    "srcId": src.id, 
+                    "destId": dest.id 
+                }, 
+                success:function(data){ 
+                    if(data.result) 
+                    { 
+						$.messager.show({
+							title:'我的消息',
+							msg:data.sql							
+						});    
+                   } 
+                } 
+             
+            }); 
+              
+        }  
+    });  
+}  
+var themes = [{
+		value : 'icon-blank',
+		text : 'icon-blank',
+		iconCls:'icon-blank'
+	}, {
+		value : 'icon-add',
+		text : 'icon-add',
+		iconCls:'icon-add'
+	}, {
+		value : 'icon-edit',
+		text : 'icon-edit',
+		iconCls:'icon-edit'
+	}, {
+		value : 'icon-clear',
+		text : 'icon-clear',
+		iconCls:'icon-clear'
+	}, {
+		value : 'icon-remove',
+		text : 'icon-remove',
+		iconCls:'icon-remove'
+	}, {
+		value : 'icon-save',
+		text : 'icon-save',
+		iconCls:'icon-save'
+	}, {
+		value : 'icon-cut',
+		text : 'icon-cut',
+		iconCls:'icon-cut'
+	}, {
+		value : 'icon-ok',
+		text : 'icon-ok',
+		iconCls:'icon-ok'
+	}, {
+		value : 'icon-no',
+		text : 'icon-no',
+		iconCls:'icon-no'
+	}, {
+		value : 'icon-cancel',
+		text : 'icon-cancel',
+		iconCls:'icon-cancel'
+	}, {
+		value : 'icon-reload',
+		text : 'icon-reload',
+		iconCls:'icon-reload'
+	}, {
+		value : 'icon-search',
+		text : 'icon-search',
+		iconCls:'icon-search'
+	}, {
+		value : 'icon-print',
+		text : 'icon-print',
+		iconCls:'icon-print'
+	}, {
+		value : 'icon-help',
+		text : 'icon-help',
+		iconCls:'icon-help'
+	}, {
+		value : 'icon-undo',
+		text : 'icon-undo',
+		iconCls:'icon-undo'
+	}, {
+		value : 'icon-redo',
+		text : 'icon-redo',
+		iconCls:'icon-redo'
+	}, {
+		value : 'icon-back',
+		text : 'icon-back',
+		iconCls:'icon-back'
+	}, {
+		value : 'icon-sum',
+		text : 'icon-sum',
+		iconCls:'icon-sum'
+	}, {
+		value : 'icon-tip',
+		text : 'icon-tip',
+		iconCls:'icon-tip'
+	}, {
+		value : 'icon-filter',
+		text : 'icon-filter',
+		iconCls:'icon-filter'
+	}, {
+		value : 'icon-man',
+		text : 'icon-man',
+		iconCls:'icon-man'
+	}, {
+		value : 'icon-more',
+		text : 'icon-more',
+		iconCls:'icon-more'
+	}
+];
+	
+</script>
+
+</head>
+<body>
+	<table id="tg" ></table>
+	
+	<div id="tb">
+		<a onclick="append()" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true"> </a>
+		<a onclick="del()" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true"> </a>
+		<a onclick="edit()" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" > </a>
+		<a onclick="cancel()" class="easyui-linkbutton" data-options="iconCls:'icon-undo',plain:true" > </a>
+		<a onclick="save()" class="easyui-linkbutton" data-options="iconCls:'icon-save',plain:true" > </a>
+		
+		<input id="add_to_xg" >
+	</div>
+
+</body>
+</html>

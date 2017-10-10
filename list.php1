@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<?php
+include '../conn.php';
+// 连接到数据库
+mysql_query("set character set 'utf8'");
+
+$sql="select * from note order by id desc limit 1 ";
+$rs=mysql_query( $sql);
+$row = mysql_fetch_array($rs);
+console.log($row);
+?>
+<html>
+<head>
+<meta charset="UTF-8">
+    <meta charset="UTF-8">  
+	<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>List</title>  
+<?php 
+	require_once("../inc.js");
+?>    
+</head>
+<!-- <script type="text/javascript" src="datagrid-cellediting.js"></script>
+ 注释内容 -->
+
+<body>
+	<div class="easyui-navpanel"  style="padding:10px">
+		<header>
+            <div class="m-toolbar">
+                <span class="m-title"><?php echo $row['title'];?></span>
+            </div>
+        </header>
+		<?php echo $row['nr'];?>
+		<footer>
+			<div class="m-toolbar">
+				<div class="m-title"><?php echo $row['sj'];?></div>
+			</div>
+		</footer>
+	</div>
+</body>	
+</html>
